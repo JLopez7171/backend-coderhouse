@@ -1,0 +1,25 @@
+<h1>{{title}}</h1>
+
+<ul id="productos-lista">
+</ul>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+
+  socket.on('productos', (productos) => {
+    console.log('Productos recibidos:', productos);
+    const lista = document.getElementById('productos-lista');
+    lista.innerHTML = '';
+    productos.forEach(prod => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <h2>${prod.title}</h2>
+        <p>${prod.description}</p>
+        <p>Precio: $${prod.price}</p>
+        <p>Categoría: ${prod.category}</p>
+      `;
+      lista.appendChild(li);
+    });
+  });
+</script>

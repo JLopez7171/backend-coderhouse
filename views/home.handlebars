@@ -1,0 +1,54 @@
+<h1>{{title}}</h1>
+
+<form method="get" action="/">
+  <label>
+    Categoría:
+    <input type="text" name="category" value="{{pagination.category}}">
+  </label>
+  <label>
+    Disponibilidad:
+    <select name="status">
+      <option value="" {{#unless pagination.status}}selected{{/unless}}>Todas</option>
+      <option value="true" {{#if (eq pagination.status "true")}}selected{{/if}}>Disponibles</option>
+      <option value="false" {{#if (eq pagination.status "false")}}selected{{/if}}>No disponibles</option>
+    </select>
+  </label>
+  <label>
+    Ordenar precio:
+    <select name="sort">
+      <option value="" {{#unless pagination.sort}}selected{{/unless}}>Sin orden</option>
+      <option value="asc" {{#if (eq pagination.sort "asc")}}selected{{/if}}>Ascendente</option>
+      <option value="desc" {{#if (eq pagination.sort "desc")}}selected{{/if}}>Descendente</option>
+    </select>
+  </label>
+  <label>
+    Productos por página:
+    <input type="number" name="limit" value="{{pagination.limit}}" min="1" max="100">
+  </label>
+  <button type="submit">Filtrar</button>
+</form>
+
+<ul>
+  {{#each productos}}
+    <li>
+      <h2>{{this.title}}</h2>
+      <p>{{this.description}}</p>
+      <p>Precio: ${{this.price}}</p>
+      <p>Categoría: {{this.category}}</p>
+      <p>Disponible: {{#if this.status}}Sí{{else}}No{{/if}}</p>
+    </li>
+  {{/each}}
+</ul>
+
+
+<nav>
+  {{#if pagination.hasPrevPage}}
+    <a href="?page={{pagination.prevPage}}&limit={{pagination.limit}}&category={{pagination.category}}&status={{pagination.status}}&sort={{pagination.sort}}">Anterior</a>
+  {{/if}}
+
+  Página {{pagination.currentPage}} de {{pagination.totalPages}}
+
+  {{#if pagination.hasNextPage}}
+    <a href="?page={{pagination.nextPage}}&limit={{pagination.limit}}&category={{pagination.category}}&status={{pagination.status}}&sort={{pagination.sort}}">Siguiente</a>
+  {{/if}}
+</nav>
