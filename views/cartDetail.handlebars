@@ -1,0 +1,60 @@
+{{!-- views/cartDetail.handlebars --}}
+
+<h1>Carrito ID: {{cart._id}}</h1>
+
+{{#if cart.products.length}}
+  <ul>
+    {{#each cart.products}}
+      <li>
+        <strong>{{this.product.title}}</strong> — Cantidad: {{this.quantity}} — 
+        Precio Unitario: ${{this.product.price}} — 
+        Subtotal: ${{multiply this.quantity this.product.price}}
+        <button onclick="removeProduct('{{../cart._id}}', '{{this.product._id}}')">Eliminar</button>
+      </li>
+    {{/each}}
+  </ul>
+
+  <p><strong>Total:</strong> ${{totalPrice cart.products}}</p>
+
+  <button id="emptyCartBtn">Vaciar carrito</button>
+  <p id="emptyResult"></p>
+
+{{else}}
+  <p>El carrito está vacío.</p>
+{{/if}}
+
+<script>
+  document.getElementById('emptyCartBtn')?.addEventListener('click', async () => {
+    const cartId = '{{cart._id}}';
+
+    try {
+      const response = await fetch(`/api/carts/${cartId}`, {
+        method: 'DELETE'
+      });
+
+      const result = await response.json();
+      document.getElementById('emptyResult').innerText = result.mensaje || result.error;
+
+      setTimeout(() => location.reload(), 1000);
+    } catch (err) {
+      console.error(err);
+      document.getElementById('emptyResult').innerText = 'Error al vaciar carrito.';
+    }
+  });
+
+  async function removeProduct(cartId, productId) {
+    try {
+      const response = await fetch(`/api/carts/${cartId}/products/${productId}`, {
+        method: 'DELETE'
+      });
+
+      const result = await response.json();
+      alert(result.mensaje || result.error);
+
+      location.reload();
+    } catch (err) {
+      console.error(err);
+      alert('Error al eliminar producto.');
+    }
+  }
+</script>

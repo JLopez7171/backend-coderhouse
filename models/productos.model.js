@@ -18,9 +18,8 @@ const productSchema = new mongoose.Schema({
         required: true
     },
     status: {
-        type: String,
-        enum: ['Disponible', 'Agotado'],
-        default: 'Disponible'
+        type: Boolean,
+        default: true
     },
     thumbnail: {
         type: String,

@@ -1,0 +1,39 @@
+
+<h1>{{product.title}}</h1>
+
+<p><strong>Descripción:</strong> {{product.description}}</p>
+<p><strong>Precio:</strong> ${{product.price}}</p>
+<p><strong>Categoría:</strong> {{product.category}}</p>
+<p><strong>Stock:</strong> {{product.stock}}</p>
+<p><strong>Estado:</strong> {{#if product.status}}Disponible{{else}}Agotado{{/if}}</p>
+
+<label for="cartId">ID del carrito:</label>
+<input type="text" id="cartId" placeholder="Ej: 64f9b2...">
+
+<button id="addToCartBtn">Agregar al carrito</button>
+
+<p id="resultMsg"></p>
+
+<script>
+  document.getElementById('addToCartBtn').addEventListener('click', async () => {
+    const cartId = document.getElementById('cartId').value.trim();
+    const productId = '{{product._id}}';
+
+    if (!cartId) {
+      alert('Por favor ingresa el ID de tu carrito.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/carts/${cartId}/products/${productId}`, {
+        method: 'POST'
+      });
+
+      const result = await response.json();
+      document.getElementById('resultMsg').innerText = result.mensaje || result.error;
+    } catch (err) {
+      console.error(err);
+      document.getElementById('resultMsg').innerText = 'Error al agregar producto.';
+    }
+  });
+</script>

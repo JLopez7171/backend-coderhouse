@@ -21,9 +21,18 @@ app.use(express.json());
 
 const hbs = handlebars.create({
   helpers: {
-    eq: (a, b) => a == b
+    eq: (a, b) => a == b,
+    multiply: (a, b) => a * b,
+    totalPrice: (products) => {
+      let total = 0;
+      products.forEach(p => {
+        total += p.quantity * p.product.price;
+      });
+      return total.toFixed(2);
+    }
   }
 });
+
 app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 app.set('views', './views');
@@ -91,13 +100,52 @@ app.get('/', async (req, res) => {
 
 
 app.get('/products', async (req, res) => {
-    try {
-        const products = await Product.find();
-        res.json(products);
-    } catch (err) {
-        res.status(500).json({ error: 'Error al obtener productos', details: err.message });
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const query = req.query.query;
+    const sort = req.query.sort;
+
+    const filter = {};
+    if (query) {
+      filter.$or = [
+        { category: query },
+        { status: query === 'true' ? true : query === 'false' ? false : undefined }
+      ];
     }
+
+    const sortOption = {};
+    if (sort === 'asc') sortOption.price = 1;
+    if (sort === 'desc') sortOption.price = -1;
+
+    const totalDocs = await Product.countDocuments(filter);
+    const totalPages = Math.ceil(totalDocs / limit);
+    const currentPage = page > totalPages ? totalPages : page;
+
+    const products = await Product.find(filter)
+      .sort(sortOption)
+      .skip((currentPage - 1) * limit)
+      .limit(limit);
+
+    res.json({
+      status: 'success',
+      payload: products,
+      totalPages,
+      prevPage: currentPage > 1 ? currentPage - 1 : null,
+      nextPage: currentPage < totalPages ? currentPage + 1 : null,
+      page: currentPage,
+      hasPrevPage: currentPage > 1,
+      hasNextPage: currentPage < totalPages,
+      prevLink: currentPage > 1 ? `/products?page=${currentPage - 1}` : null,
+      nextLink: currentPage < totalPages ? `/products?page=${currentPage + 1}` : null
+    });
+
+  } catch (err) {
+    res.status(500).json({ status: 'error', error: err.message });
+  }
 });
+
+
 app.get('/products/:id', async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
@@ -167,6 +215,41 @@ app.post('/products', async (req, res) => {
     res.status(500).json({ error: 'Error al guardar producto', details: err.message });
   }
 });
+
+
+app.post('/api/carts', async (req, res) => {
+  try {
+    const newCart = new Cart({ products: [] }); // carrito vacío
+    const savedCart = await newCart.save();
+    res.status(201).json({ mensaje: 'Carrito creado', carrito: savedCart });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al crear carrito', details: err.message });
+  }
+});
+
+app.post('/api/carts/:cid/products/:pid', async (req, res) => {
+  try {
+    const { cid, pid } = req.params;
+
+    const cart = await Cart.findById(cid);
+    if (!cart) return res.status(404).json({ error: 'Carrito no encontrado' });
+
+    const productInCart = cart.products.find(p => p.product.toString() === pid);
+
+    if (productInCart) {
+      productInCart.quantity += 1;
+    } else {
+      cart.products.push({ product: pid, quantity: 1 });
+    }
+
+    await cart.save();
+
+    res.json({ mensaje: 'Producto agregado al carrito', carrito: cart });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al agregar producto', details: err.message });
+  }
+});
+
 
 //PUT
 app.put('/products/:id', async (req, res) => {
